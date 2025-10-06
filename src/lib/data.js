@@ -1,30 +1,34 @@
 export async function getCars() {
     try {
-        // Menggunakan environment variable yang sudah kita set
-        const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/cars`;
+        // SOLUSI #1: Menggunakan nama environment variable yang benar
+        const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/v1/cars`;
 
         const response = await fetch(apiUrl, {
-            // Opsi ini memastikan kita selalu mendapat data terbaru saat development
             cache: 'no-store',
         });
 
         if (!response.ok) {
-            throw new Error('Gagal mengambil data mobil dari API');
+            // Memberikan pesan error yang lebih spesifik
+            throw new Error(`Gagal mengambil data: Status ${response.status}`);
         }
 
         const result = await response.json();
-        return result;
+
+        // SOLUSI #2: Mengembalikan array yang ada di dalam properti 'data'
+        return result.data;
+
     } catch (error) {
         console.error('Error fetching cars:', error);
-        // Mengembalikan objek dengan properti error agar bisa ditangani di UI
-        return { error: error.message };
+        // Mengembalikan array kosong jika terjadi error agar tidak crash
+        return [];
     }
 }
 
+// Fungsi ini sudah benar, tidak perlu diubah.
 export async function getCarById(id) {
     try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/cars/${id}`, {
-            cache: 'no-store' // Penting agar data selalu segar
+            cache: 'no-store'
         });
 
         if (!res.ok) {
@@ -32,10 +36,9 @@ export async function getCarById(id) {
         }
 
         const data = await res.json();
-        return data.data; // API kita membungkusnya dalam properti 'data'
+        return data.data;
     } catch (error) {
         console.error(error);
-        // Mengembalikan null jika terjadi error atau mobil tidak ditemukan
         return null;
     }
 }
