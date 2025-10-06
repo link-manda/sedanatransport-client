@@ -12,10 +12,9 @@ export function AuthProvider({ children }) {
     const router = useRouter();
 
     useEffect(() => {
-        // Cek apakah ada user yang sudah login saat aplikasi pertama kali dimuat
         const checkUser = async () => {
             try {
-                const { data } = await api.get('/user');
+                const { data } = await api.get('/api/user');
                 setUser(data);
             } catch (error) {
                 setUser(null);
@@ -28,24 +27,19 @@ export function AuthProvider({ children }) {
 
     const login = async ({ email, password }) => {
         try {
-            // 1. Ambil CSRF cookie dari Sanctum
             await api.get('/sanctum/csrf-cookie');
-
-            // 2. Kirim request login
             await api.post('/login', { email, password });
 
-            // 3. Ambil data user yang sudah login
-            const { data } = await api.get('/user');
+            const { data } = await api.get('/api/user');
             setUser(data);
 
-            // 4. Redirect ke dashboard admin
             router.push('/admin/dashboard');
         } catch (error) {
-            // Tangani error login (misal: password salah)
             if (error.response && error.response.status === 422) {
                 throw new Error('Email atau password salah.');
             }
-            throw error;
+            console.error('Login error:', error.response || error);
+            throw new Error('Gagal melakukan login. Periksa koneksi atau kredensial Anda.');
         }
     };
 
@@ -56,6 +50,8 @@ export function AuthProvider({ children }) {
             router.push('/login');
         } catch (error) {
             console.error("Gagal logout:", error);
+            setUser(null); // paksa logout di frontend jika request gagal
+            router.push('/login');
         }
     };
 
@@ -66,5 +62,5 @@ export function AuthProvider({ children }) {
     );
 }
 
-// Custom hook untuk menggunakan AuthContext
 export const useAuth = () => useContext(AuthContext);
+

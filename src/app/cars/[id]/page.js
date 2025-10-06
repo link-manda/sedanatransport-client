@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import api from '@/lib/api'; // Gunakan instance axios terpusat
 
-// Komponen Form terpisah (dengan styling dark mode)
 function BookingForm({ carId, carStatus, onSuccess }) {
     const [formData, setFormData] = useState({
         nama_pelanggan: '', email_pelanggan: '', telepon_pelanggan: '',
@@ -24,27 +24,26 @@ function BookingForm({ carId, carStatus, onSuccess }) {
         const payload = { car_id: carId, ...formData };
 
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/orders`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify(payload),
-            });
-            const responseData = await res.json();
-            if (!res.ok) {
-                let errorMessage = responseData.message || 'Terjadi kesalahan.';
-                if (responseData.errors) {
-                    errorMessage = Object.values(responseData.errors).flat().join('\n');
-                }
-                throw new Error(errorMessage);
+            // Perbaikan: Gunakan instance `api` dan URL yang benar
+            const res = await api.post('/api/v1/orders', payload);
+
+            if (res.status !== 201) {
+                throw new Error(res.data.message || 'Terjadi kesalahan.');
             }
             onSuccess();
         } catch (err) {
-            setSubmitError(err.message);
+            const errorData = err.response?.data;
+            let errorMessage = errorData?.message || 'Terjadi kesalahan saat memesan.';
+            if (errorData?.errors) {
+                errorMessage = Object.values(errorData.errors).flat().join('\n');
+            }
+            setSubmitError(errorMessage);
         } finally {
             setIsSubmitting(false);
         }
     };
 
+    // Sisa kode (UI Form) tidak berubah...
     if (carStatus !== 'tersedia') {
         return (
             <div className="bg-yellow-100 dark:bg-yellow-900/40 border-l-4 border-yellow-500 text-yellow-700 dark:text-yellow-300 p-4 rounded-lg" role="alert">
@@ -54,7 +53,6 @@ function BookingForm({ carId, carStatus, onSuccess }) {
         );
     }
 
-    // Kelas dasar untuk input
     const inputClasses = "w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white";
 
     return (
@@ -104,9 +102,8 @@ function BookingForm({ carId, carStatus, onSuccess }) {
     );
 }
 
-// Komponen utama halaman
+
 export default function CarDetailPage({ params }) {
-    // Tidak ada perubahan signifikan pada logika, hanya styling
     const { id } = params;
     const [car, setCar] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -119,12 +116,11 @@ export default function CarDetailPage({ params }) {
             setLoading(true);
             setError(null);
             try {
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/cars/${id}`);
-                if (!res.ok) throw new Error('Mobil tidak ditemukan.');
-                const data = await res.json();
-                setCar(data.data);
+                // Perbaikan: Gunakan instance `api`
+                const res = await api.get(`/api/v1/cars/${id}`);
+                setCar(res.data.data);
             } catch (err) {
-                setError(err.message);
+                setError('Mobil tidak ditemukan.');
             } finally {
                 setLoading(false);
             }
@@ -132,6 +128,7 @@ export default function CarDetailPage({ params }) {
         fetchCar();
     }, [id]);
 
+    // Sisa kode (UI Detail) tidak berubah...
     if (loading) return <div className="text-center py-20"><p className="text-lg">Memuat data mobil...</p></div>;
     if (error) return <div className="text-center py-20"><p className="text-lg text-red-600 font-semibold">Error: {error}</p></div>;
     if (!car) return <div className="text-center py-20"><p className="text-lg">Data mobil tidak dapat ditemukan.</p></div>;
@@ -184,4 +181,5 @@ export default function CarDetailPage({ params }) {
         </div>
     );
 }
+
 
