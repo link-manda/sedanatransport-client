@@ -35,11 +35,19 @@ export function AuthProvider({ children }) {
 
             router.push('/admin/dashboard');
         } catch (error) {
-            if (error.response && error.response.status === 422) {
-                throw new Error('Email atau password salah.');
+            // --- LOGGING YANG LEBIH BAIK ---
+            console.error('Login error object:', error);
+            if (error.response) {
+                console.error('Response data:', error.response.data);
+                console.error('Response status:', error.response.status);
+            } else if (error.request) {
+                console.error('No response received:', error.request);
+            } else {
+                console.error('Error message:', error.message);
             }
-            console.error('Login error:', error.response || error);
-            throw new Error('Gagal melakukan login. Periksa koneksi atau kredensial Anda.');
+            // --- AKHIR LOGGING ---
+
+            throw new Error('Gagal melakukan login. Periksa koneksi atau kredensial Anda. Cek console browser untuk detail.');
         }
     };
 
@@ -50,7 +58,7 @@ export function AuthProvider({ children }) {
             router.push('/login');
         } catch (error) {
             console.error("Gagal logout:", error);
-            setUser(null); // paksa logout di frontend jika request gagal
+            setUser(null);
             router.push('/login');
         }
     };
@@ -63,4 +71,3 @@ export function AuthProvider({ children }) {
 }
 
 export const useAuth = () => useContext(AuthContext);
-
