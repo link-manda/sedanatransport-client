@@ -21,3 +21,22 @@ export async function getCars() {
     }
 }
 
+export async function getCarById(id) {
+    try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/cars/${id}`, {
+            cache: 'no-store' // Penting agar data selalu segar
+        });
+
+        if (!res.ok) {
+            throw new Error('Gagal mengambil data mobil.');
+        }
+
+        const data = await res.json();
+        return data.data; // API kita membungkusnya dalam properti 'data'
+    } catch (error) {
+        console.error(error);
+        // Mengembalikan null jika terjadi error atau mobil tidak ditemukan
+        return null;
+    }
+}
+
